@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ruta en Mapa</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+<h1>Buscar Ruta</h1>
+<div class="contenedor">
+    <form method="post" action="/ruta">
+        <div>
+            <label for="origen">Origen:</label>
+            <input type="text" id="origen" name="origen" required value="{{ origen | default('') }}">
+        </div>
+        <div>
+            <label for="destino">Destino:</label>
+            <input type="text" id="destino" name="destino" required value="{{ destino | default('') }}">
+        </div>
+        <div>
+            <button type="submit">Buscar Ruta</button>
+        </div>
+    </form>
+
+    <div class="info-ruta">
+        <h3>Información de la ruta</h3>
+        {% if error %}
+            <p style="color:red;">{{ error }}</p>
+        {% else %}
+            {% if distancia %}
+                <p><strong>Distancia:</strong> {{ (distancia / 1000) | round(2) }} km</p>
+                <p><strong>Duración:</strong> {{ (duracion / 60) | round(1) }} minutos</p>
+                <p><strong>Origen:</strong> {{ origen }}</p>
+                <p><strong>Destino:</strong> {{ destino }}</p>
+                <p><strong>URL:<a href="{{ ruta_url }}" target="_blank">{{ ruta_url }}</a></p>
+            {% else %}
+                <p>Introduce origen y destino para ver la ruta.</p>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<h2>Mapa</h2>
+<div id="mapa"></div>
+
+{% if ruta_geojson %}
+<script>
+    const geojsonData = {{ ruta_geojson|safe }};
+    const latCentro = {{ lat_centro }};
+    const lonCentro = {{ lon_centro }};
+    const map = L.map('mapa').setView([latCentro, lonCentro], 10);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const rutaLayer = L.geoJSON(geojsonData, {
+        style: { color: 'purple', weight: 5 }
+    }).addTo(map);
+
+    map.fitBounds(rutaLayer.getBounds());
+</script>
+{% endif %}
+
+</body>
+</html>
